@@ -1,3 +1,3 @@
-# JavaScript and AJAX Intro
+# Associations
 
 This CHIPS is under construction.
