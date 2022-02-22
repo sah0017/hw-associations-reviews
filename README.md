@@ -260,5 +260,31 @@ UID) are SSO-controlled.  So, get rid of the extraneous views and routes.
 
 # 3. Add a Review model
 
+As with the MovieGoer above, use the scaffolding method to create the 
+Review resource.  
+1.  You will need to edit the migration to contain the following code:
+class CreateReviews < ActiveRecord::Migration
+  def change
+    create_table 'reviews' do |t|
+      t.integer    'potatoes'
+      t.text       'comments'
+      t.references 'moviegoer'
+      t.references 'movie'
+    end
+  end
+end
+
+This code will create the new table reviews and add the necessary fields.
+Note the two types called references.  These fields allow us to associate 
+a review with the correct moviegoer and movie.
+
+2.  Next, edit the review.rb model and add the following code:
+  belongs_to :movie
+  belongs_to :moviegoer
+
+3.  To complete the code required to establish the association, you will 
+need to edit both the Movie and the Moviegoer class and add the following 
+field (idiomatically, it should go right after 'class Movie' or 'class Moviegoer'):
+  has_many :reviews
 
 # 4. Create the basic CRUD actions for reviews using nested routes
