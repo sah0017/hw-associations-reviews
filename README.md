@@ -154,10 +154,9 @@ place, define some  (empty) controller actions for `create`,
 `destroy`, and `fail`.  (The latter will be used when the user is
 unable to successfully sign in, e.g. forgotten password.) 
 
-2. Modify `routes.rb` so that `/auth/:provider/callback` (whether via
-`GET` or `POST`) maps to the `create` action, and `/auth/failure` maps
-to the `fail` action.  Also create a route for `GET /session/destroy`,
-which we'll use later.
+2. Modify `routes.rb` so that `/auth/:provider/callback` (using `POST`) maps 
+to the `create` action, and `/auth/failure` maps to the `fail` action.  Also 
+create a route for `GET /session/destroy`, which we'll use later.
 
 * Why don't you need to map `GET /auth/provider`?
 
@@ -186,10 +185,10 @@ Near the top of the body of your layout:
 ```html
 <div id="login" class="container" width="100%">
   <div class="row bg-light border-bottom">
-    <div class="col-2 offset-8">
+    <div class="col-2">
       <a class="btn btn-primary text-center" href="LINK HERE">Sign In</a>
     </div>
-    <div class="col-2">
+    <div class="col-sm">
       <a class="btn btn-danger  text-center" href="LINK HERE">Sign Out</a>
     </div>
   </div>
@@ -248,7 +247,8 @@ To keep things simple, in this example app we will not collect or
 manage any other info about the user.
 
 1.  Scaffold the Moviegoer resource and specify `name` and `uid` as
-the attributes of the moviegoer.
+the attributes of the moviegoer.  Run rake db:migrate to create the
+new database table MovieGoer.
 
 2.  We have to be careful with the Create and Update actions for
 users.  Specifically, since we're using SSO exclusively (rather than
@@ -257,7 +257,19 @@ will only be Created the first time they try to sign in with SSO, and
 cannot really be edited or updated since the only fields (name and
 UID) are SSO-controlled.  So, get rid of the extraneous views and routes.
 
+* What keywords can we use in routes.rb to restrict which routes are
+created with resources :movie_goers
 
+((Answer:  :only or :except))
+
+3.  Add the following code to the MovieGoer model:
+    def self.create_with_omniauth(auth)
+        Moviergoer.create!(
+            :uid => auth["uid"],
+            :name => auth["info"]["name"]
+        )
+
+    
 # 3. Add a Review model
 
 As with the MovieGoer above, use the scaffolding method to create the 
