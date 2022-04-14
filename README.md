@@ -79,16 +79,17 @@ should arrange to have it map to a controller action that tells the
 user their sign-in was unsuccessful, or perhaps redirect them back to
 the sign-in page.
 
-* `(GET|POST) /auth/:provider/callback`: if the user successfully signs in
-via SSO, your app will receive a request to this route.  You should
+* `(GET|POST) /auth/:provider/callback`: if the user successfully signs 
+in via SSO, your app will receive a request to this route.  You should
 therefore arrange to have this route map to a controller action in
 which you take steps to "sign the user in", such as remembering
 the user's ID in the `session[]`.  When this route is called, OmniAuth
-makes available a hash called `auth_hash[]`  containing information about the user, provided
-by the SSO provider.  The specific information varies depending on the
-provider, but there are a couple of hash keys that are guaranteed to
-be present, which we will use.  The route should be accessible via
-either `GET` or `POST` due to differences in how SSO providers work.
+makes available a hash called `auth_hash[]`  containing information about 
+the user, provided by the SSO provider.  The specific information varies 
+depending on the provider, but there are a couple of hash keys that are 
+guaranteed to be present, which we will use.  The route should be 
+accessible via either `GET` or `POST` due to differences in how SSO 
+providers work.
 
 Consult the OmniAuth project's wiki (on GitHub) to answer the
 following questions in preparation to add OmniAuth via GitHub:
@@ -109,7 +110,10 @@ you must add the following line in your Gemfile:
 by default by Bundler.))
 
 Follow the instructions for `omniauth-github` to setup your Rack
-middleware to intercept the above routes.  
+middleware to intercept the above routes.  You will need to set up
+environment variables with your github developer keys.  If you're
+unfamiliar with environment variables, this tutorial explains how to 
+set up [environment variables in Rails](https://blog.devgenius.io/what-are-environment-variables-in-rails-6f7e97a0b164)
 
 * At this point, you should be committing three new or modified files---what are they?
 
@@ -117,6 +121,9 @@ middleware to intercept the above routes.
 
 Next, we have to decide on a controller that will handle
 authentication actions.  
+
+# Handling Authentication actions
+
 In the next section we will add a Moviegoers model and controller, and
 you might think that would be the place to handle SSO, since it is the
 Moviegoer who will be logging in.  But the Single Responsibility
@@ -154,9 +161,10 @@ place, define some  (empty) controller actions for `create`,
 `destroy`, and `fail`.  (The latter will be used when the user is
 unable to successfully sign in, e.g. forgotten password.) 
 
-2. Modify `routes.rb` so that `/auth/:provider/callback` (using `POST`) maps 
-to the `create` action, and `/auth/failure` maps to the `fail` action.  Also 
-create a route for `GET /session/destroy`, which we'll use later.
+2. Modify `routes.rb` so that `/auth/:provider/callback` (whether via 'GET' 
+or `POST`) maps to the `create` action, and `/auth/failure` maps to the 
+`fail` action.  Also create a route for `GET /session/destroy`, which we'll 
+use later.
 
 * Why don't you need to map `GET /auth/provider`?
 
@@ -185,8 +193,8 @@ Near the top of the body of your layout:
 ```html
 <div id="login" class="container" width="100%">
   <div class="row bg-light border-bottom">
-    <div class="col-2">
-      <a class="btn btn-primary text-center" href="LINK HERE">Sign In</a>
+    <div class="col-sm">
+      <%= link_to "Sign In", href="LINK HERE", method: :post, class: 'btn btn-primary text-center' %>
     </div>
     <div class="col-sm">
       <a class="btn btn-danger  text-center" href="LINK HERE">Sign Out</a>
@@ -225,8 +233,7 @@ Now we just need a model to represent someone who can login.
 To move things along quickly, we can _scaffold_ the Moviegoer
 resource.
 
-Consulting the official [Rails
-guides](https://guides.rubyonrails.org/v3.2/getting_started.html#creating-a-resource),
+Consulting the official [Rails guides](https://guides.rubyonrails.org/v3.2/getting_started.html#creating-a-resource),
 when you scaffold a resource, what is created for you?
 
 ((Answer: A migration to add the model, with columns you specify;
@@ -263,12 +270,52 @@ created with resources :movie_goers
 ((Answer:  :only or :except))
 
 3.  Add the following code to the MovieGoer model:
-    def self.create_with_omniauth(auth)
-        Moviergoer.create!(
-            :uid => auth["uid"],
-            :name => auth["info"]["name"]
-        )
+    def self.from_omniauth(auth)
+        where(uid: auth.uid).first_or_create do |moviegoer|
+            moviegoer.uid = auth.uid,
+            moviegoer.name = auth.info.name
+        end
+    end
 
+This code will allow us to link the user's ID in our own app with the
+provider's ID.  Now we need to modify our session_controller to call
+this method.  Previously, we forces a bogus exception to throw an error
+in the create method.  It's time to modify the create method to link
+the different ID's and "login" the user to Rotten Potatoes.
+
+Add the following code to the create method in SessionController:
+
+	auth = request.env["omniauth.auth"]
+	user = MovieGoer.from_omniauth(auth)
+	session[:user_id] = user.uid
+	flash[:notice] = "Logged in successfully."
+	redirect_to movies_path
+
+The first line will get the hash returned by omniauth so we can retrieve
+information about the user.  Then we'll call the from_omniauth code that we 
+previously placed in the MovieGoer model.  This will allow us to create a 
+session when a user is successfully authenticated via the external provider.
+
+In order to keep track of the authenticated user, we will add some code to 
+the ApplicationController, which will be inerited by all controllers.  In
+this code, we will establish the variable @current_user so that controller 
+methods and views can just look at @current_user without being coupled to 
+the details of how the user was authenticated.  ApplicationController
+should contain the following code:
+
+class ApplicationController < ActionController::Base
+	before_filter :set_current_user
+	protected  # prevents method from being invoked by a route
+	def set_current_user
+		# we exploit the fact that the below query may return nil
+		@current_user ||= MovieGoer.where(:id => session[:user_id])
+		redirect_to movies_path and return unless @current_user
+	end
+end
+
+The before_filter will fire before an action is run in the controllers,
+and this filter will enforce that a user is logged in or else send the 
+user back to the movies index page.
     
 # 3. Add a Review model
 
@@ -300,3 +347,82 @@ field (idiomatically, it should go right after 'class Movie' or 'class Moviegoer
   has_many :reviews
 
 # 4. Create the basic CRUD actions for reviews using nested routes
+Now that the models are set up to represent the relationships between a Movie, a
+MovieGoer, and a Review, we need a RESTful want to refer to actions associated
+with movie reviews.  When creating or updating a review, how do we link it
+to the moviegoer and movie?  Presumably the moviegoer will be the @current_user, 
+but what about the movie?
+
+It only makes sense to create a review when you have a movie in mind, therefore the 
+most likely approach is for the "Create Review" functionality to be accessible from
+a button or link on the Show Movie Details page for a specfic movie.  So at the
+moment we display this control, we know what movie the review is going to be
+associated with.  The question is how to get this information to the _new_ or
+_create_ method in the ReviewsController.
+
+We can create RESTful routes that will reflect the logical "nesting" of Reviews
+inside of Movies, and this method will make the Movie ID explicit.  In routes.rb,
+change the line _resources :movies_ to:
+resources :movies do
+	resources :reviews
+end
+
+Since _Movie_ is the "owning" side of the association, it's the outer resource.
+Just as the original resources :movies provided a set of RESTful URI helpers for
+CRUD actions on movies, this _nested resource_ route specification provides a 
+set of RESTful URI helpers for CRUD acions on _reviews that are owned by a movie_.  
+Run _rake routes_ to see the additional routes that have been created.
+
+Note that via convention over configuration, the URI wildcare :id will match the ID 
+of the resource itself - that is, the ID of a review - and Rails chooses the 
+"outer" resource name to make :movie_id capture the ID of the "owning" resource.
+The ID values will therefore be available in controller actions as params[:id]
+(the review) and params[:movie_id] (the movie with which the review will be
+associated).
+
+We are finally ready to create the views and actions associated with a new
+review.  In the ReviewsController, we will add a before-filter that will check 
+for two conditions before a review can be created:
+
+1. @current_user is set (that is, someone is logged in and will "own the new review).
+2.  The movie captures from the route as params[:movie_id] exists in the database.
+
+Add the following code to ReviewsController:
+
+before_filter :has_moviegoer_and_movie, :only => [:new, :create]
+protected
+def has_moviegoer_and_movie
+	unless @current_user
+		flash[:warning] = 'You must be logged in to create a review.'
+		redirect_to movies_path
+	end
+	unless (@movie = Movie.where(:id => params[:movie_id]))
+		flash[:warning] = 'Review must be for an existing movie.'
+		redirect_to movies_path
+	end
+end
+
+
+The view uses the @movie variable to create a submission path for the form using 
+the _movie_review_path_ helper.  When that form is submitted, once again _movie_id_ 
+is parsed from the route and checked by the before-filter prior to calling the 
+_create_ action.  Similarly, we could link to the page for creating a new review by
+calling _link_to_ with the route helper _new_movie_review_path(@movie)_ as its
+URI argument.
+
+Add the following code to app/views/reviews/new.html.erb:
+<h1> New Review for <%= @movie.title %> </h1>
+
+<%= form_tag movie_reviews_path(@movie), class: 'form' do %>
+	<label class="col-form-label"> How many potatoes: </label>
+	<%= select_tag 'review[potatoes]', options_for_select(1..5), class: 'form-control' %>
+	<%= submit_tag 'Create Review', :class => 'btn btn-success' %>
+<% end %> 
+
+And to access the Create Review form while viewing the details of a specific movie, we
+need to add a button to the Show Movie form.  Add the following line to the row of
+buttons at the bottom of app/views/movies/show.html.erb:
+
+<%= link_to 'Review the movie', new_movie_review_path(@movie), :class 'btn btn-primary col-2' %>
+
+
