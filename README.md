@@ -264,7 +264,7 @@ will only be Created the first time they try to sign in with SSO, and
 cannot really be edited or updated since the only fields (name and
 UID) are SSO-controlled.  So, get rid of the extraneous views and routes.
 
-* What keywords can we use in routes.rb to restrict which routes are
+* What keywords can we use in `routes.rb` to restrict which routes are
 created with resources :movie_goers
 
 ((Answer:  :only or :except))
@@ -285,7 +285,7 @@ this method.  Previously, we forces a bogus exception to throw an error
 in the create method.  It's time to modify the create method to link
 the different ID's and "login" the user to Rotten Potatoes.
 
-Add the following code to the create method in SessionController:
+Add the following code to the create method in `SessionController`:
 ```ruby
 	auth = request.env["omniauth.auth"]
 	user = MovieGoer.from_omniauth(auth)
@@ -300,9 +300,9 @@ session when a user is successfully authenticated via the external provider.
 
 In order to keep track of the authenticated user, we will add some code to 
 the ApplicationController, which will be inerited by all controllers.  In
-this code, we will establish the variable @current_user so that controller 
-methods and views can just look at @current_user without being coupled to 
-the details of how the user was authenticated.  ApplicationController
+this code, we will establish the variable `@current_user` so that controller 
+methods and views can just look at `@current_user` without being coupled to 
+the details of how the user was authenticated.  `ApplicationController`
 should contain the following code:
 ```ruby
 class ApplicationController < ActionController::Base
@@ -323,6 +323,7 @@ user back to the movies index page.
 
 As with the MovieGoer above, use the scaffolding method to create the 
 Review resource.  
+
 1.  You will need to edit the migration to contain the following code:
 ```ruby
 class CreateReviews < ActiveRecord::Migration
@@ -356,7 +357,7 @@ field (idiomatically, it should go right after 'class Movie' or 'class Moviegoer
 Now that the models are set up to represent the relationships between a Movie, a
 MovieGoer, and a Review, we need a RESTful want to refer to actions associated
 with movie reviews.  When creating or updating a review, how do we link it
-to the moviegoer and movie?  Presumably the moviegoer will be the @current_user, 
+to the moviegoer and movie?  Presumably the moviegoer will be the `@current_user`, 
 but what about the movie?
 
 It only makes sense to create a review when you have a movie in mind, therefore the 
@@ -364,10 +365,10 @@ most likely approach is for the "Create Review" functionality to be accessible f
 a button or link on the Show Movie Details page for a specfic movie.  So at the
 moment we display this control, we know what movie the review is going to be
 associated with.  The question is how to get this information to the _new_ or
-_create_ method in the ReviewsController.
+_create_ method in the `ReviewsController`.
 
 We can create RESTful routes that will reflect the logical "nesting" of Reviews
-inside of Movies, and this method will make the Movie ID explicit.  In routes.rb,
+inside of Movies, and this method will make the Movie ID explicit.  In `routes.rb`,
 change the line _resources :movies_ to:
 ```ruby
 resources :movies do
@@ -375,26 +376,26 @@ resources :movies do
 end
 ```
 Since _Movie_ is the "owning" side of the association, it's the outer resource.
-Just as the original resources :movies provided a set of RESTful URI helpers for
+Just as the original resources `:movies` provided a set of RESTful URI helpers for
 CRUD actions on movies, this _nested resource_ route specification provides a 
 set of RESTful URI helpers for CRUD acions on _reviews that are owned by a movie_.  
 Run _rake routes_ to see the additional routes that have been created.
 
-Note that via convention over configuration, the URI wildcare :id will match the ID 
+Note that via convention over configuration, the URI wildcard `:id` will match the ID 
 of the resource itself - that is, the ID of a review - and Rails chooses the 
-"outer" resource name to make :movie_id capture the ID of the "owning" resource.
-The ID values will therefore be available in controller actions as params[:id]
-(the review) and params[:movie_id] (the movie with which the review will be
+"outer" resource name to make `:movie_id` capture the ID of the "owning" resource.
+The ID values will therefore be available in controller actions as `params[:id]`
+(the review) and `params[:movie_id]` (the movie with which the review will be
 associated).
 
 We are finally ready to create the views and actions associated with a new
-review.  In the ReviewsController, we will add a before-filter that will check 
+review.  In the `ReviewsController`, we will add a before-filter that will check 
 for two conditions before a review can be created:
 
 1.  @current_user is set (that is, someone is logged in and will "own the new review).
 2.  The movie captures from the route as params[:movie_id] exists in the database.
 
-Add the following code to ReviewsController:
+Add the following code to `ReviewsController`:
 ```ruby
 before_filter :has_moviegoer_and_movie, :only => [:new, :create]
 protected
@@ -410,7 +411,7 @@ def has_moviegoer_and_movie
 end
 ```
 
-The view uses the @movie variable to create a submission path for the form using 
+The view uses the `@movie` variable to create a submission path for the form using 
 the _movie_review_path_ helper.  When that form is submitted, once again _movie_id_ 
 is parsed from the route and checked by the before-filter prior to calling the 
 _create_ action.  Similarly, we could link to the page for creating a new review by
