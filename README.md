@@ -270,12 +270,14 @@ created with resources :movie_goers
 ((Answer:  :only or :except))
 
 3.  Add the following code to the MovieGoer model:
+```ruby
     def self.from_omniauth(auth)
         where(uid: auth.uid).first_or_create do |moviegoer|
             moviegoer.uid = auth.uid,
             moviegoer.name = auth.info.name
         end
     end
+```
 
 This code will allow us to link the user's ID in our own app with the
 provider's ID.  Now we need to modify our session_controller to call
@@ -284,13 +286,13 @@ in the create method.  It's time to modify the create method to link
 the different ID's and "login" the user to Rotten Potatoes.
 
 Add the following code to the create method in SessionController:
-
+```ruby
 	auth = request.env["omniauth.auth"]
 	user = MovieGoer.from_omniauth(auth)
 	session[:user_id] = user.uid
 	flash[:notice] = "Logged in successfully."
 	redirect_to movies_path
-
+```
 The first line will get the hash returned by omniauth so we can retrieve
 information about the user.  Then we'll call the from_omniauth code that we 
 previously placed in the MovieGoer model.  This will allow us to create a 
@@ -302,7 +304,7 @@ this code, we will establish the variable @current_user so that controller
 methods and views can just look at @current_user without being coupled to 
 the details of how the user was authenticated.  ApplicationController
 should contain the following code:
-
+```ruby
 class ApplicationController < ActionController::Base
 	before_filter :set_current_user
 	protected  # prevents method from being invoked by a route
@@ -312,7 +314,7 @@ class ApplicationController < ActionController::Base
 		redirect_to movies_path and return unless @current_user
 	end
 end
-
+```
 The before_filter will fire before an action is run in the controllers,
 and this filter will enforce that a user is logged in or else send the 
 user back to the movies index page.
@@ -322,6 +324,7 @@ user back to the movies index page.
 As with the MovieGoer above, use the scaffolding method to create the 
 Review resource.  
 1.  You will need to edit the migration to contain the following code:
+```ruby
 class CreateReviews < ActiveRecord::Migration
   def change
     create_table 'reviews' do |t|
@@ -332,19 +335,22 @@ class CreateReviews < ActiveRecord::Migration
     end
   end
 end
-
+```
 This code will create the new table reviews and add the necessary fields.
 Note the two types called references.  These fields allow us to associate 
 a review with the correct moviegoer and movie.
 
 2.  Next, edit the review.rb model and add the following code:
+```ruby
   belongs_to :movie
   belongs_to :moviegoer
-
+```
 3.  To complete the code required to establish the association, you will 
 need to edit both the Movie and the Moviegoer class and add the following 
 field (idiomatically, it should go right after 'class Movie' or 'class Moviegoer'):
+```ruby
   has_many :reviews
+```
 
 # 4. Create the basic CRUD actions for reviews using nested routes
 Now that the models are set up to represent the relationships between a Movie, a
@@ -363,10 +369,11 @@ _create_ method in the ReviewsController.
 We can create RESTful routes that will reflect the logical "nesting" of Reviews
 inside of Movies, and this method will make the Movie ID explicit.  In routes.rb,
 change the line _resources :movies_ to:
+```ruby
 resources :movies do
 	resources :reviews
 end
-
+```
 Since _Movie_ is the "owning" side of the association, it's the outer resource.
 Just as the original resources :movies provided a set of RESTful URI helpers for
 CRUD actions on movies, this _nested resource_ route specification provides a 
@@ -384,11 +391,11 @@ We are finally ready to create the views and actions associated with a new
 review.  In the ReviewsController, we will add a before-filter that will check 
 for two conditions before a review can be created:
 
-1. @current_user is set (that is, someone is logged in and will "own the new review).
+1.  @current_user is set (that is, someone is logged in and will "own the new review).
 2.  The movie captures from the route as params[:movie_id] exists in the database.
 
 Add the following code to ReviewsController:
-
+```ruby
 before_filter :has_moviegoer_and_movie, :only => [:new, :create]
 protected
 def has_moviegoer_and_movie
@@ -401,7 +408,7 @@ def has_moviegoer_and_movie
 		redirect_to movies_path
 	end
 end
-
+```
 
 The view uses the @movie variable to create a submission path for the form using 
 the _movie_review_path_ helper.  When that form is submitted, once again _movie_id_ 
@@ -411,6 +418,7 @@ calling _link_to_ with the route helper _new_movie_review_path(@movie)_ as its
 URI argument.
 
 Add the following code to app/views/reviews/new.html.erb:
+```html
 <h1> New Review for <%= @movie.title %> </h1>
 
 <%= form_tag movie_reviews_path(@movie), class: 'form' do %>
@@ -418,11 +426,11 @@ Add the following code to app/views/reviews/new.html.erb:
 	<%= select_tag 'review[potatoes]', options_for_select(1..5), class: 'form-control' %>
 	<%= submit_tag 'Create Review', :class => 'btn btn-success' %>
 <% end %> 
-
+```
 And to access the Create Review form while viewing the details of a specific movie, we
 need to add a button to the Show Movie form.  Add the following line to the row of
 buttons at the bottom of app/views/movies/show.html.erb:
-
+```html
 <%= link_to 'Review the movie', new_movie_review_path(@movie), :class 'btn btn-primary col-2' %>
-
-
+```
+Pressing this button should take you to the Create Review page.
