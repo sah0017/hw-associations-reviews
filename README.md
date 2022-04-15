@@ -404,12 +404,16 @@ def has_moviegoer_and_movie
 		flash[:warning] = 'You must be logged in to create a review.'
 		redirect_to movies_path
 	end
-	unless (@movie = Movie.where(:id => params[:movie_id]))
+	unless (@movie = Movie.where(:id => params[:movie_id]).first)
 		flash[:warning] = 'Review must be for an existing movie.'
 		redirect_to movies_path
 	end
 end
 ```
+The current movie_id is passed in via params.  When we validate that the movie 
+is present in the database, even though we are searching by id, the where clause
+will return a hash.  So we need to add the _.first_ method to the results of
+Movie.where so we only have a singular movie in the @movie variable.
 
 The view uses the `@movie` variable to create a submission path for the form using 
 the _movie_review_path_ helper.  When that form is submitted, once again _movie_id_ 
