@@ -91,7 +91,7 @@ guaranteed to be present, which we will use.  The route should be
 accessible via either `GET` or `POST` due to differences in how SSO 
 providers work.
 
-Consult the OmniAuth project's wiki (on GitHub) to answer the
+Consult the OmniAuth project's wiki (on [GitHub](https://github.com/omniauth/omniauth) to answer the
 following questions in preparation to add OmniAuth via GitHub:
 
 * What keys of `auth_hash` are **always** guaranteed to be present
@@ -111,9 +111,14 @@ by default by Bundler.))
 
 Follow the instructions for `omniauth-github` to setup your Rack
 middleware to intercept the above routes.  You will need to set up
-environment variables with your github developer keys.  If you're
-unfamiliar with environment variables, this tutorial explains how to 
-set up [environment variables in Rails](https://blog.devgenius.io/what-are-environment-variables-in-rails-6f7e97a0b164)
+environment variables with your github developer keys.  In order for
+your app to authenticate with Github, you must register your app and obtain
+a Github key and a Github secret.  Follow these [instructions](https://docs.github.com/en/enterprise-server@3.4/developers/apps/building-github-apps/authenticating-with-github-apps#generating-a-private-key)
+to set up the key and secret.  Then you'll want to put these into Linux
+environment variables.  The ENV['GITHUB_KEY'] and ENV['GITHUB_SECRET']
+will read the key and secret from the environment variables and pass them 
+to Github.  If you're unfamiliar with environment variables, this tutorial 
+explains how to set up [environment variables in Rails](https://blog.devgenius.io/what-are-environment-variables-in-rails-6f7e97a0b164)
 
 * At this point, you should be committing three new or modified files---what are they?
 
