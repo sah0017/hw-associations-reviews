@@ -125,7 +125,7 @@ This is where you will enter your Heroku address for your application.
 The Authorization callback URL will be your Heroku address + auth/github/callback.
 This will allow Github to send the HTTP request that we defined in routes.rb.
 
-Then you'll want to put these into Linux
+Now you'll want to put your Github key and secret into Linux
 environment variables.  The ENV['GITHUB_KEY'] and ENV['GITHUB_SECRET']
 in github.rb will read the key and secret from the environment variables 
 and pass them to Github.  If you're unfamiliar with environment variables, 
