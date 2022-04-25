@@ -11,7 +11,7 @@ their reviews.  To avoid the hassles of managing passwords ourselves,
 we will allow users to use Single Sign-on (SSO) to sign in with
 third-party credentials.  We will use GitHub in this example, but with
 minimal changes you can enable SSO sign-in for any third-party auth
-provider supported by [OmniAuth]().
+provider supported by [OmniAuth](https://github.com/omniauth/omniauth).
 
 Here is the set of steps:
 
@@ -46,11 +46,11 @@ Rails app like RottenPotatoes.
 a Rails app.
 
 * You should be familiar with the concepts of how SSO works
-([ESaaS](http://www.saasbook.info) section 5.2).
+ESaaS section 5.2).
 
 * You should be familiar with the concepts and basic mechanics
 (`has_many`, `belongs_to`, and so on) of ActiveRecord Associations
-([ESaaS](http://www.saasbook.info) sections 5.4-5.6).
+ESaaS sections 5.4-5.6).
 
 
 # 1. Set up for SSO using OmniAuth for "Login with GitHub"
@@ -99,7 +99,7 @@ after a successful auth, regardless of which provider is used?
 
 ((Answer: `auth[:provider]`, `auth[:uid]`, `auth[:info][:name]`))
 
-* The `omniauth-github` Gem page on GitHub (find it) specifies that
+* The `omniauth-github` Gem page on GitHub (**find it**) specifies that
 you must add the following line in your Gemfile:
 
 `gem 'omniauth-github', github: 'omniauth/omniauth-github', branch: 'master'`
@@ -110,15 +110,17 @@ you must add the following line in your Gemfile:
 by default by Bundler.))
 
 Follow the instructions for `omniauth-github` to setup your Rack
-middleware to intercept the above routes.  You will need to set up
+middleware to intercept the above routes.  Whereas the generic omniauth has
+you create an omniauth.rb file, for this exercise you will create a github.rb
+file per the `omniauth-github` instructions.  You will need to set up
 environment variables with your github developer keys.  In order for
 your app to authenticate with Github, you must register your app and obtain
 a Github key and a Github secret.  Follow these [instructions](https://docs.github.com/en/enterprise-server@3.4/developers/apps/building-github-apps/authenticating-with-github-apps#generating-a-private-key)
 to set up the key and secret.  Then you'll want to put these into Linux
 environment variables.  The ENV['GITHUB_KEY'] and ENV['GITHUB_SECRET']
-will read the key and secret from the environment variables and pass them 
-to Github.  If you're unfamiliar with environment variables, this tutorial 
-explains how to set up [environment variables in Rails](https://blog.devgenius.io/what-are-environment-variables-in-rails-6f7e97a0b164)
+in github.rb will read the key and secret from the environment variables 
+and pass them to Github.  If you're unfamiliar with environment variables, 
+this tutorial explains how to set up [environment variables in Rails.](https://blog.devgenius.io/what-are-environment-variables-in-rails-6f7e97a0b164)
 
 * At this point, you should be committing three new or modified files---what are they?
 
