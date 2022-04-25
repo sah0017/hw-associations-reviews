@@ -55,6 +55,10 @@ ESaaS sections 5.4-5.6).
 
 # 1. Set up for SSO using OmniAuth for "Login with GitHub"
 
+Before we begin, you need to deploy your Rotten Potatoes app to heroku
+so it will have an application URL.  You will need this URL in a future 
+step.
+
 First we'll add a simple model to represent a moviegoer and allow
 sign-in via SSO,
 so that reviews can be linked to moviegoers as well as movies.  We
@@ -116,7 +120,12 @@ file per the `omniauth-github` instructions.  You will need to set up
 environment variables with your github developer keys.  In order for
 your app to authenticate with Github, you must register your app and obtain
 a Github key and a Github secret.  Follow these [instructions](https://docs.github.com/en/enterprise-server@3.4/developers/apps/building-oauth-apps/creating-an-oauth-app)
-to set up the key and secret.  Then you'll want to put these into Linux
+to set up the key and secret.  Creating the OAuth app requires a Homepage URL.
+This is where you will enter your Heroku address for your application.
+The Authorization callback URL will be your Heroku address + auth/github/callback.
+This will allow Github to send the HTTP request that we defined in routes.rb.
+
+Then you'll want to put these into Linux
 environment variables.  The ENV['GITHUB_KEY'] and ENV['GITHUB_SECRET']
 in github.rb will read the key and secret from the environment variables 
 and pass them to Github.  If you're unfamiliar with environment variables, 
