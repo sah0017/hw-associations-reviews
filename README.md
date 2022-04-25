@@ -124,6 +124,9 @@ to set up the key and secret.  Creating the OAuth app requires a Homepage URL.
 This is where you will enter your Heroku address for your application.
 The Authorization callback URL will be your Heroku address + auth/github/callback.
 This will allow Github to send the HTTP request that we defined in routes.rb.
+Github calls the key a Client ID, and you'll need to press a button to Generate
+a Client Secret.  Make sure you copy the Client Secret because it will not
+allow you to see it or retrieve it again.
 
 Now you'll want to put your Github key and secret into Linux
 environment variables.  The ENV['GITHUB_KEY'] and ENV['GITHUB_SECRET']
@@ -305,7 +308,7 @@ Add the following code to the create method in `SessionController`:
 ```ruby
 	auth = request.env["omniauth.auth"]
 	user = MovieGoer.from_omniauth(auth)
-	session[:user_id] = user.uid
+	session[:user_id] = user.id
 	flash[:notice] = "Logged in successfully."
 	redirect_to movies_path
 ```
